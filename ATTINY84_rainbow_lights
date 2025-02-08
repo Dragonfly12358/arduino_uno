@@ -1,0 +1,71 @@
+#include <TinyWireM.h>       // Software I²C
+#include <Tiny4kOLED.h>
+
+#define PIN_ANALOG_RED   0
+#define PIN_ANALOG_GREEN 1
+#define PIN_ANALOG_BLUE  2
+
+#define PIN_LED_RED   5
+#define PIN_LED_GREEN 7
+#define PIN_LED_BLUE  8
+
+
+void setup() {
+  // put your setup code here, to run once:
+  pinMode(PIN_LED_RED, OUTPUT);
+  pinMode(PIN_LED_GREEN, OUTPUT);
+  pinMode(PIN_LED_BLUE, OUTPUT);
+  
+
+  TinyWireM.begin();               // Khởi tạo TinyWireM (giao tiếp I2C cho ATtiny85)
+  
+  // Send the initialization sequence to the oled. This leaves the display turned off
+  oled.begin();
+  // Clear the memory before turning on the display
+  oled.clear();
+  // Turn on the display
+  oled.on();
+  // Switch the half of RAM that we are writing to, to be the half that is non currently displayed
+  oled.switchRenderFrame();
+}
+
+void loop() {
+  // Clear the non-displayed half of the memory to all black
+  // (The previous clear only cleared the other half of RAM)
+  oled.clear();
+
+  // The characters in the 8x16 font are 8 pixels wide and 16 pixels tall
+  // 2 lines of 16 characters exactly fills 128x32
+  oled.setFont(FONT8X16);
+  oled.setCursor(0, 0);
+  oled.print(F("RED"));
+  oled.setCursor(37, 0);
+  oled.print(F("GREEN"));
+  oled.setCursor(90, 0);
+  oled.print(F("BLUE"));
+
+  int redVal = updateLED(PIN_ANALOG_RED, PIN_LED_RED);
+  oled.setCursor(0, 2);
+  oled.print(redVal);
+
+  int greenVal = updateLED(PIN_ANALOG_GREEN, PIN_LED_GREEN);
+  oled.setCursor(37, 2);
+  oled.print(greenVal);
+
+  int blueVal = updateLED(PIN_ANALOG_BLUE, PIN_LED_BLUE);
+  oled.setCursor(90, 2);
+  oled.print(blueVal);
+
+  // Swap which half of RAM is being written to, and which half is being displayed
+  oled.switchFrame();
+  
+  delay(100);
+}
+
+uint8_t updateLED(uint8_t analogPin, uint8_t ledPin) {
+  int adcVal = analogRead(analogPin);
+  int pwmVal = map(adcVal, 0, 1023, 0, 255);
+  
+  analogWrite(ledPin, 255 - pwmVal);
+  return pwmVal;
+}
